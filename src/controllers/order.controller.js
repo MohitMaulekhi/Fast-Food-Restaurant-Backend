@@ -1,8 +1,9 @@
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {OrderDetails} from "../models/order.model.js"
+import { asyncHandler } from "../utils/asyncHandler.js"
 
-const OrderFood = async (req,res)=>{
+const OrderFood = asyncHandler(async (req,res)=>{
     const {orderList,total} = req.body
     const user = req.user
     if(!orderList || !total){
@@ -13,30 +14,45 @@ const OrderFood = async (req,res)=>{
         orderList,
         total,
         address:user.address,
-        userFullName:user.fulName,
-        phoneNumber:user.phoneNumber
+        userFullName:user.fullName,
+        phoneNumber:user.phoneNumber,
+        email:user.email
     }
+    
     )
     const createOrder = await OrderDetails.findById(order._id)
     if(!createOrder){
         throw new ApiError(404,"Unable to proccess your order")
     }
-    return res.status(201).json(new ApiResponse(200,{},"Order In process"))
-}
+    return res.status(201).json(new ApiResponse(200,createOrder,"Order In process"))
+})
 
-const CancelOrder = async(req,res)=>{
+const CancelOrder =asyncHandler(async(req,res)=>{
     const user = req.user
     const id = req.params.id
     const userEmail = user.email
-    const orderEmail = OrderDetails.findById(id).email
-    if(userEmail !== orderEmail){
+    const order = await OrderDetails.findById(id)
+    if(userEmail !== order.email){
         throw new ApiError(404,"Invalid Request")
     }
     try {
         await OrderDetails.deleteOne({_id:id})
-        return res.status(201)
-        .json(new ApiResponse(201,{},"Ordered Food canceled successfully"))
+        return res.status(204)
+        .json(new ApiResponse(204,{},"Ordered Food canceled successfully"))
     } catch (error) {
         new ApiError(500,"Unable to delete from database")
     }
+})
+
+const fetchAllOrder = asyncHandler(async (req,res)=>{
+    const user = req.user
+    const userEmail = user.email
+    const orders = await OrderDetails.find({email:userEmail})
+    res.status(200)
+    .json(new ApiResponse(200,orders,"All orders fetched successfully"))
+})
+export {
+    OrderFood,
+    CancelOrder,
+    fetchAllOrder
 }

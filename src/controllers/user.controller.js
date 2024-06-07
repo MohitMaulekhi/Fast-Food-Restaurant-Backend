@@ -1,16 +1,17 @@
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
+import { asyncHandler } from "../utils/asyncHandler.js"
 
-const registerUser = async (req,res) =>{
-    const {fulName,email,phoneNumber,address,password} = req.body
+const registerUser =asyncHandler( async (req,res) =>{
+    const {fullName,email,phoneNumber,address,password} = req.body
 
     if(
-        !fulName || !email || !phoneNumber || !password || !address
+        !fullName || !email || !phoneNumber || !password || !address
     ){
         throw new ApiError(400,"All fields are necessary")
     }
-    const emailRegex = new Regex()
+    const emailRegex = new RegExp()
     if(!emailRegex.test(email)){
         throw new ApiError(400,"Invalid Email")
     }
@@ -21,7 +22,7 @@ const registerUser = async (req,res) =>{
         throw new ApiError(409,"User with email or phone number already exist")   
     }
     const user = await User.create(
-        {   fulName,
+        {   fullName,
             email,
             phoneNumber,
             address,
@@ -37,14 +38,14 @@ const registerUser = async (req,res) =>{
     return res.status(201).json(
         new ApiResponse(201,createdUser,"User registered Successfully")
     )
-}
+})
 
-const loginUser = async (req,res)=>{
+const loginUser = asyncHandler(async (req,res)=>{
     const {email,password} = req.body
     if(!email){
         throw new ApiError(400,"Email is required")
     }
-    const emailRegex = new Regex()
+    const emailRegex = new RegExp()
     if(!emailRegex.test(email)){
         throw new ApiError(400,"Invalid Email")
     }
@@ -52,12 +53,14 @@ const loginUser = async (req,res)=>{
     if(!user){
         throw new ApiError(404,"User not found")
     }
-    const boolpass = await user.isPasswordCorrect(password)
+    const boolpass = await user.ispasswordCorrect(password)
     if (!boolpass) {
         throw new ApiError(405, "Invalid credentials")
     }
     const accessToken = user.generateAcessToken()
-    const loggedInUser = user.select("-password")
+    const loggedInUser = await User.findById(user._id).select(
+        "-password"
+    )
     return res.status(200)
     .cookie("accessToken", accessToken,{
         httpOnly:true,
@@ -69,14 +72,14 @@ const loginUser = async (req,res)=>{
         new ApiResponse(
             200,
             {
-                user: loggedInUser, accessToken
+                user: loggedInUser
             },
             "User logged in successfully"
         )
     )
-}
+})
 
-const logoutUser = async(req,res)=>{
+const logoutUser = asyncHandler( async(req,res)=>{
     return res.status(200)
     .clearCookie("accessToken",{
         sameSite:"none",
@@ -85,14 +88,14 @@ const logoutUser = async(req,res)=>{
     .json(
         new ApiResponse(200,{},"User Logged Out")
     )
-}
+})
 
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = asyncHandler( async (req, res) => {
     const user = req.user
     return res
         .status(200)
         .json(new ApiResponse(200, user, "current user fetched successfully"))
-}
+})
 
 
 export{

@@ -1,42 +1,37 @@
 import mongoose,{Schema} from "mongoose";
 
+const orderListSchema = new Schema({
+    productName:{
+        type:String
+    },
+    quantity:{
+        type:Number
+    },
+})
 const orderDetailsSchema = new Schema(
     {
-        orderlist:{
             orderList:[
-                {
-                    productName:{
-                        type:String
-                    },
-                    quantity:{
-                        type:Number
-                    },
-                }
+                orderListSchema
             ],
             total:{
                 type:Number,
                 required:true
             },
+            email:{
+                type:String,
+                required:true
+            },
             address:{
                 type:String,
-                required:True
+                required:true
             },
             userFullName:{
                 type:String,
                 required:true
             },
             phoneNumber:{
-                type:String,
-                unique:[true,"Phone number is already in use"],
-                validate:{
-                    validator:function(phoneNumber){
-                        const phRegex = new RegExp("[0-9]{10}")
-                        return phoneNumber.length === 10 && phRegex.test(phoneNumber);
-                    }
-                }
+                type:String
             }
-
-        }
     }
 ,{timestamps:true})
 

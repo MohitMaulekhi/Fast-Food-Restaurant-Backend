@@ -4,7 +4,7 @@ import bcrypt from "bcrypt"
 
 const userSchema = new Schema(
     {
-        fulName:{
+        fullName:{
             type:String,
             required:true,
         },
@@ -36,13 +36,12 @@ const userSchema = new Schema(
 {timestamps:true})
 
 
-// Encrypting password before saving
 userSchema.pre("save",async function(next){
-    const user = this
-    if(!user.isModified("password")){return next()};
-    return await bcrypt.hash(user.password,2)
-    next()
+    if(!this.isModified("password")) return next();
+    this.password = await bcrypt.hash(this.password,2)
+    next();
 })
+
 
 userSchema.methods.ispasswordCorrect = async function(password){
     return await bcrypt.compare(password,this.password)
